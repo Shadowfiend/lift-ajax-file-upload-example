@@ -1,14 +1,32 @@
-This file contains multiple Lift project templates:
+File upload example
+===================
 
-- lift_basic is a basic Lift application with a built-in user class
-             and nice use of Blueprint CSS and HTML5
+This example shows how to set up simple AJAX file upload. The changes are all
+client-side; on the server, all Lift code is written as if file upload were
+fully AJAX-supported (see src/main/webapp/fileUpload.html and
+src/main/scala/code/snippet/FileUpload.scala). jQuery is used to retarget the
+form to submit to an iframe, whose results are then eval'ed (see
+src/main/webapp/static/js/fileUpload.js).
 
-- lift_xhtml is a basic Lift application with a built-in user class
-             and nice use of Blueprint CSS and XHTML
+Due to this last part, much like old-style AJAX, this solution is same-origin
+only (it does not support Cross-Origin specs).
 
-- lift_blank is a blank Lift project that does not have any model
-             or CSS
+IE
+==
 
-- lift_mvc   is a Lift project that uses Lift's MVC support rather
-             than view-first.  No model stuff, but Blueprint CSS
+Internet Explorer tries to save files served as text/javascript to an iframe as
+if they were a file download. We use a Lift response transformer to force the
+content type to text/plain in these cases (see Boot.scala).
 
+Limitations
+===========
+
+You'll have to do error handling client-side. In particular, a failed request
+won't necessarily give you status code info and such. This is `fake AJAX', late
+'90s-style.
+
+Commit
+======
+
+The full changeset for now exists in commit 2b20ff25eea60b17512b at
+https://github.com/Shadowfiend/lift-ajax-file-upload-example/commit/2b20ff25eea60b17512b48484250b3e7298c875a
