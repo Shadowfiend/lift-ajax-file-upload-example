@@ -19,6 +19,29 @@ import code.model._
  */
 class Boot {
   def boot {
+
+    /************************ FILE UPLOAD *******************************/
+    // In cases where we have an AJAX request for IE with an uploaded file, we
+    // assume we served through an iframe (a fairly safe assumption) and serve
+    // up the response with a content type of text/plain so that IE does not
+    // attempt to save the response as a downloaded file.
+    LiftRules.responseTransformers.append {
+      resp =>
+        (for (req <- S.request) yield {
+          resp match {
+            case InMemoryResponse(data, headers, cookies, code)
+                                    if ! req.uploadedFiles.isEmpty &&
+                                        req.isIE &&
+                                        req.path.wholePath.head == LiftRules.ajaxPath =>
+              val contentlessHeaders = headers.filterNot(_._1.toLowerCase == "content-type")
+              InMemoryResponse(data, ("Content-Type", "text/plain; charset=utf-8") :: contentlessHeaders, cookies, code)
+            case _ => resp
+          }
+        }) openOr resp
+    }
+    /********************************************************************/
+
+
     if (!DB.jndiJdbcConnAvailable_?) {
       val vendor = 
 	new StandardDBVendor(Props.get("db.driver") openOr "org.h2.Driver",
@@ -42,6 +65,7 @@ class Boot {
     // Build SiteMap
     def sitemap = SiteMap(
       Menu.i("Home") / "index" >> User.AddUserMenusAfter, // the simple way to declare a menu
+      Menu.i("File Upload") / "fileUpload" >> User.AddUserMenusAfter, // the simple way to declare a menu
 
       // more complex because this menu allows anything in the
       // /static path to be visible
